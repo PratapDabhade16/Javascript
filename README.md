@@ -1,2 +1,1 @@
-# PulseFit
-PulseFit – Your fitness journey, powered with motivation and progress.
+  Learning Javascript and backend technologies 
