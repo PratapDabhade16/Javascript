@@ -1,10 +1,2648 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>PulseFit</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIDHAR - Disaster Management & Preparedness Platform</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #1a6fc4;
+            --primary-dark: #155a9d;
+            --secondary: #2c3e50;
+            --accent: #ff6b6b;
+            --success: #4caf50;
+            --warning: #ffc107;
+            --danger: #f44336;
+            --light: #f5f7fa;
+            --dark: #2d3436;
+            --text: #2c3e50;
+            --text-light: #777;
+            --admin-primary: #6a1b9a;
+            --admin-dark: #4a148c;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-dark) 100%);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* User info in header */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .panel-switcher {
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .panel-switcher:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(26, 111, 196, 0.8), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .admin-hero {
+            background: linear-gradient(rgba(106, 27, 154, 0.8), rgba(74, 20, 140, 0.8)), url('https://images.unsplash.com/photo-1432888622747-4eb9a8f5a07a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80');
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .cta-button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+        
+        .admin-cta-button {
+            background: var(--admin-primary);
+        }
+        
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid white;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cta-button:not(.secondary):hover {
+            background: #ff5252;
+        }
+        
+        .admin-cta-button:hover {
+            background: #8e24aa;
+        }
+        
+        .cta-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            font-size: 1.4rem;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .map-container {
+            grid-column: 1 / -1;
+            height: 500px;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+            border-radius: 8px;
+        }
+        
+        /* User Input Styles */
+        .user-input {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .input-group label {
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        
+        .input-group input, .input-group select, .input-group textarea {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .admin-button {
+            background: var(--admin-primary);
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .admin-button:hover {
+            background: var(--admin-dark);
+        }
+        
+        /* Alert Styles */
+        .alert-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .alert.high {
+            background-color: #ffebee;
+            border-left: 5px solid var(--danger);
+        }
+        
+        .alert.medium {
+            background-color: #fff8e1;
+            border-left: 5px solid var(--warning);
+        }
+        
+        .alert.low {
+            background-color: #e8f5e9;
+            border-left: 5px solid var(--success);
+        }
+        
+        .alert i {
+            font-size: 1.5rem;
+        }
+        
+        .alert.high i {
+            color: var(--danger);
+        }
+        
+        .alert.medium i {
+            color: var(--warning);
+        }
+        
+        .alert.low i {
+            color: var(--success);
+        }
+        
+        /* Chart Styles */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        /* Risk Legend */
+        .risk-legend {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .risk-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .risk-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .high-risk {
+            background-color: var(--danger);
+        }
+        
+        .medium-risk {
+            background-color: var(--warning);
+        }
+        
+        .low-risk {
+            background-color: var(--success);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--secondary);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .admin-footer {
+            background: var(--admin-dark);
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+        
+        .notification-icon {
+            position: relative;
+        }
+        
+        /* New Styles for Enhancements */
+        .location-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .location-buttons button {
+            margin-top: 0;
+            flex: 1;
+        }
+        
+        .location-buttons button.secondary {
+            background: #6c757d;
+        }
+        
+        .location-buttons button.secondary:hover {
+            background: #5a6268;
+        }
+        
+        .evacuation-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .evacuation-info h3 {
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .resources-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .resource-card {
+            padding: 1.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: white;
+        }
+        
+        .resource-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .admin-resource-card i {
+            color: var(--admin-primary);
+        }
+        
+        .resource-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+        
+        .resource-card p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .user-marker {
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+        }
+        
+        .risk-zone {
+            stroke: false;
+            fillOpacity: 0.3;
+        }
+        
+        .location-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        /* Page Sections */
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 4rem 2rem;
+            background: white;
+        }
+        
+        .features h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--secondary);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-feature-card i {
+            color: var(--admin-primary);
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        /* Resources Page */
+        .resources-page {
+            padding: 2rem;
+        }
+        
+        .resources-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .resource-category {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .resource-category h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .admin-resource-category h3 {
+            color: var(--admin-primary);
+        }
+        
+        .resource-list {
+            list-style: none;
+        }
+        
+        .resource-list li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .resource-list li:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .admin-resource-list li:before {
+            color: var(--admin-primary);
+        }
+        
+        .resource-list a {
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .resource-list a:hover {
+            color: var(--primary);
+        }
+        
+        .admin-resource-list a:hover {
+            color: var(--admin-primary);
+        }
+        
+        /* Drill Planning Section */
+        .drill-planner {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .drill-planner h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--secondary);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Mobile Navigation */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--secondary);
+                flex-direction: column;
+                padding: 1rem;
+                gap: 0.5rem;
+            }
+            
+            .admin-nav ul {
+                background: var(--admin-dark);
+            }
+            
+            nav ul.show {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero h2 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .cta-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        /* Registration Form */
+        .registration-form {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .registration-form h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--secondary);
+        }
+        
+        /* Drill Participants List */
+        .participants-list {
+            margin-top: 2rem;
+        }
+        
+        .participant-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .participant-info h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .participant-role {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .admin-participant-role {
+            background: var(--admin-primary);
+        }
+        
+        /* Emergency Alert Banner */
+        .emergency-alert {
+            background: var(--danger);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            position: sticky;
+            top: 80px;
+            z-index: 999;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { background-color: var(--danger); }
+            50% { background-color: #ff5252; }
+            100% { background-color: var(--danger); }
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background: var(--light);
+            font-weight: 600;
+        }
+        
+        .data-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        /* Admin specific styles */
+        .admin-main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        
+        .admin-sidebar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        
+        .admin-sidebar h3 {
+            color: var(--admin-primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-menu {
+            list-style: none;
+        }
+        
+        .admin-menu li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .admin-menu a:hover, .admin-menu a.active {
+            background: rgba(106, 27, 154, 0.1);
+            color: var(--admin-primary);
+        }
+        
+        .admin-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 2.5rem;
+            color: var(--admin-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--admin-dark);
+        }
+        
+        .stat-card p {
+            color: var(--text-light);
+        }
+        
+        .admin-form {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-form h3 {
+            color: var(--admin-primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-buttons button {
+            padding: 0.5rem 1rem;
+            margin-top: 0;
+        }
+        
+        .btn-edit {
+            background: var(--warning);
+        }
+        
+        .btn-delete {
+            background: var(--danger);
+        }
+        
+        @media (max-width: 992px) {
+            .admin-main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-sidebar {
+                order: 2;
+            }
+            
+            .admin-content {
+                order: 1;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to PulseFit</h1>
-    <p>Your fitness journey, powered with motivation and progress 💪</p>
+    <div class="container">
+        <!-- Emergency Alert Banner -->
+        <div class="emergency-alert" id="emergency-alert" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="alert-message">Emergency Alert: High flood risk in Mumbai area. Evacuation recommended.</span>
+            <button onclick="closeAlert()" style="margin-left: 1rem; background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.25rem 0.5rem; border-radius: 3px;">Dismiss</button>
+        </div>
+        
+        <header id="main-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>NIDHAR</h1>
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav>
+                <ul id="nav-menu">
+                    <li><a href="#" class="nav-link active" data-page="home"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#" class="nav-link" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-page="alerts"><i class="fas fa-bell notification-icon"></i> Alerts</a></li>
+                    <li><a href="#" class="nav-link" data-page="drills"><i class="fas fa-running"></i> Drill Planning</a></li>
+                    <li><a href="#" class="nav-link" data-page="resources"><i class="fas fa-hands-helping"></i> Resources</a></li>
+                    <li><a href="#" class="nav-link" data-page="register"><i class="fas fa-user-plus"></i> Register</a></li>
+                </ul>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span>User</span>
+                <div class="panel-switcher" onclick="switchToAdminPanel()">
+                    <i class="fas fa-user-cog"></i> Admin Panel
+                </div>
+            </div>
+        </header>
+        
+        <header id="admin-header" class="admin-header" style="display: none;">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>NIDHAR ADMIN</h1>
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav class="admin-nav">
+                <ul id="admin-nav-menu">
+                    <li><a href="#" class="nav-link active" data-page="admin-dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-page="admin-users"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="#" class="nav-link" data-page="admin-alerts"><i class="fas fa-bell"></i> Alerts</a></li>
+                    <li><a href="#" class="nav-link" data-page="admin-drills"><i class="fas fa-running"></i> Drills</a></li>
+                    <li><a href="#" class="nav-link" data-page="admin-analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                </ul>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <span>Admin</span>
+                <div class="panel-switcher" onclick="switchToUserPanel()">
+                    <i class="fas fa-user"></i> User Panel
+                </div>
+            </div>
+        </header>
+        
+        <!-- User Panel Content -->
+        <div id="user-panel">
+            <!-- Home Page -->
+            <section id="home" class="page-section active">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h2>Prepare, Respond, Recover</h2>
+                        <p>NIDHAR is your comprehensive platform for disaster management, emergency alerts, and community preparedness planning.</p>
+                        <div class="cta-buttons">
+                            <a href="#" class="cta-button" data-page="register">Register for Drills</a>
+                            <a href="#" class="cta-button secondary" data-page="resources">View Resources</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="features">
+                    <h2>How NIDHAR Protects Communities</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <i class="fas fa-bell"></i>
+                            <h3>Real-Time Alerts</h3>
+                            <p>Receive immediate notifications about disasters and emergencies in your area with detailed guidance.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-running"></i>
+                            <h3>Drill Planning</h3>
+                            <p>Schools and organizations can plan, schedule, and conduct safety drills with our tools.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <h3>Risk Assessment</h3>
+                            <p>Visualize disaster risks in your area with our interactive maps and predictive analytics.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-users"></i>
+                            <h3>Community Training</h3>
+                            <p>Register for training sessions and drills to be better prepared for emergencies.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-book"></i>
+                            <h3>Resources Library</h3>
+                            <p>Access preparedness guides, emergency protocols, and recovery resources.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Progress Tracking</h3>
+                            <p>Monitor your preparedness level and track participation in drills and training.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dashboard Page -->
+            <section id="dashboard" class="page-section">
+                <main class="main-content">
+                    <div class="card map-container">
+                        <div class="card-header">
+                            <h2><i class="fas fa-map"></i> Disaster Risk Map</h2>
+                            <div class="risk-legend">
+                                <div class="risk-item">
+                                    <div class="risk-color high-risk"></div>
+                                    <span>High Risk</span>
+                                </div>
+                                <div class="risk-item">
+                                    <div class="risk-color medium-risk"></div>
+                                    <span>Medium Risk</span>
+                                </div>
+                                <div class="risk-item">
+                                    <div class="risk-color low-risk"></div>
+                                    <span>Low Risk</span>
+                                </div>
+                                <div class="risk-item">
+                                    <div class="risk-color" style="background-color: var(--primary);"></div>
+                                    <span>Your Location</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="map"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-user-check"></i> User Location & Alerts</h2>
+                        </div>
+                        <div class="user-input">
+                            <div class="input-group">
+                                <label for="location">Enter Your Location:</label>
+                                <input type="text" id="location" placeholder="City, State or Coordinates">
+                                <div class="location-buttons">
+                                    <button id="detect-location" class="secondary"><i class="fas fa-location-arrow"></i> Detect My Location</button>
+                                    <button id="save-location" class="secondary"><i class="fas fa-save"></i> Save</button>
+                                </div>
+                                <div class="location-status" id="location-status"></div>
+                            </div>
+                            <div class="input-group">
+                                <label for="disaster-type">Select Disaster Type:</label>
+                                <select id="disaster-type">
+                                    <option value="all">All Disasters</option>
+                                    <option value="flood">Flood</option>
+                                    <option value="cyclone">Cyclone</option>
+                                    <option value="landslide">Landslide</option>
+                                    <option value="earthquake">Earthquake</option>
+                                    <option value="wildfire">Wildfire</option>
+                                </select>
+                            </div>
+                            <button id="check-risk"><i class="fas fa-search"></i> Check Risk Level</button>
+                            
+                            <div class="loading" id="loading-indicator">
+                                <i class="fas fa-spinner"></i> Analyzing risk...
+                            </div>
+                            
+                            <div class="alert-container" id="alert-container">
+                                <div class="alert high">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <div>
+                                        <h3>High Flood Risk</h3>
+                                        <p>Mumbai area has 80% probability of flooding in next 24 hours.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert medium">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <div>
+                                        <h3>Cyclone Alert</h3>
+                                        <p>Cyclone expected to make landfall in 48 hours. Wind speeds up to 100 km/h.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="evacuation-info" id="evacuation-info" style="display: none;">
+                                <h3><i class="fas fa-info-circle"></i> Evacuation Guidance</h3>
+                                <p id="evacuation-details">Follow local authorities' instructions. Prepare emergency kit with essentials.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-line"></i> Historical Disaster Data</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="historicalChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-forecast"></i> Risk Forecast</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-hands-helping"></i> Emergency Resources</h2>
+                        </div>
+                        <div class="resources-container">
+                            <div class="resource-card">
+                                <i class="fas fa-phone-alt"></i>
+                                <h3>Emergency Contacts</h3>
+                                <p>Local authorities and helplines</p>
+                            </div>
+                            <div class="resource-card">
+                                <i class="fas fa-first-aid"></i>
+                                <h3>First Aid</h3>
+                                <p>Medical assistance guidelines</p>
+                            </div>
+                            <div class="resource-card">
+                                <i class="fas fa-house-damage"></i>
+                                <h3>Shelter Info</h3>
+                                <p>Nearest evacuation centers</p>
+                            </div>
+                            <div class="resource-card">
+                                <i class="fas fa-file-download"></i>
+                                <h3>Preparedness Guide</h3>
+                                <p>Download emergency checklist</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </section>
+            
+            <!-- Alerts Page -->
+            <section id="alerts" class="page-section">
+                <div class="resources-page">
+                    <div class="resources-header">
+                        <h2><i class="fas fa-bell"></i> Emergency Alerts & Notifications</h2>
+                        <p>Real-time alerts about potential disasters in your area</p>
+                    </div>
+                    
+                    <div class="alert-container">
+                        <div class="alert high">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <h3>High Flood Risk - Mumbai</h3>
+                                <p>Issued: Today at 14:30 | Valid until: Tomorrow at 14:30</p>
+                                <p>Heavy rainfall expected with 80% probability of flooding in low-lying areas. Evacuation recommended for coastal regions.</p>
+                                <button onclick="showEvacuationRoutes()">View Evacuation Routes</button>
+                                <button onclick="shareAlert()" style="background: #6c757d;">Share Alert</button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert medium">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <h3>Cyclone Alert - Eastern Coast</h3>
+                                <p>Issued: Today at 10:45 | Valid until: 48 hours</p>
+                                <p>Cyclone expected to make landfall in 48 hours. Wind speeds up to 100 km/h. Prepare emergency supplies.</p>
+                                <button onclick="showPreparationGuidelines()">Preparation Guidelines</button>
+                                <button onclick="shareAlert()" style="background: #6c757d;">Share Alert</button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert low">
+                            <i class="fas fa-info-circle"></i>
+                            <div>
+                                <h3>Landslide Warning - Northern Regions</h3>
+                                <p>Issued: Yesterday at 16:20 | Valid until: Next week</p>
+                                <p>Moderate risk of landslides in hilly areas due to recent rainfall. Avoid travel to affected regions if possible.</p>
+                                <button onclick="showSafetyTips()">Safety Tips</button>
+                                <button onclick="shareAlert()" style="background: #6c757d;">Share Alert</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-cog"></i> Alert Preferences</h2>
+                        </div>
+                        <div class="user-input">
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" checked> High Risk Alerts
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" checked> Medium Risk Warnings
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox"> Low Risk Notifications
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" checked> Email Notifications
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" checked> SMS Alerts
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" checked> Push Notifications
+                                </label>
+                            </div>
+                            <button>Update Preferences</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Drill Planning Page -->
+            <section id="drills" class="page-section">
+                <div class="resources-page">
+                    <div class="resources-header">
+                        <h2><i class="fas fa-running"></i> Emergency Drill Planning</h2>
+                        <p>Plan and organize safety drills for your organization or community</p>
+                    </div>
+                    
+                    <div class="drill-planner">
+                        <h2>Schedule a New Drill</h2>
+                        <div class="user-input">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label for="drill-type">Drill Type:</label>
+                                    <select id="drill-type">
+                                        <option value="earthquake">Earthquake</option>
+                                        <option value="fire">Fire</option>
+                                        <option value="flood">Flood</option>
+                                        <option value="cyclone">Cyclone</option>
+                                        <option value="tsunami">Tsunami</option>
+                                        <option value="lockdown">Lockdown</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="drill-date">Date:</label>
+                                    <input type="date" id="drill-date">
+                                </div>
+                                <div class="input-group">
+                                    <label for="drill-time">Time:</label>
+                                    <input type="time" id="drill-time">
+                                </div>
+                                <div class="input-group">
+                                    <label for="drill-duration">Duration (minutes):</label>
+                                    <input type="number" id="drill-duration" min="5" max="120" value="30">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="drill-location">Location:</label>
+                                <input type="text" id="drill-location" placeholder="Enter address or location">
+                            </div>
+                            <div class="input-group">
+                                <label for="drill-notes">Additional Notes:</label>
+                                <textarea id="drill-notes" rows="3" placeholder="Any special instructions or requirements"></textarea>
+                            </div>
+                            <button onclick="scheduleDrill()"><i class="fas fa-calendar-plus"></i> Schedule Drill</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-history"></i> Upcoming Drills</h2>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Location</th>
+                                    <th>Participants</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="upcoming-drills">
+                                <tr>
+                                    <td>15 Oct 2023, 10:00 AM</td>
+                                    <td>Earthquake</td>
+                                    <td>City Central School</td>
+                                    <td>42 registered</td>
+                                    <td>
+                                        <button onclick="viewDrillDetails(1)">View</button>
+                                        <button onclick="editDrill(1)" style="background: #6c757d;">Edit</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>22 Oct 2023, 2:30 PM</td>
+                                    <td>Fire</td>
+                                    <td>Community Center</td>
+                                    <td>28 registered</td>
+                                    <td>
+                                        <button onclick="viewDrillDetails(2)">View</button>
+                                        <button onclick="editDrill(2)" style="background: #6c757d;">Edit</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            </table>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-users"></i> Drill Participants</h2>
+                        </div>
+                        <div class="participants-list">
+                            <div class="participant-card">
+                                <div class="participant-info">
+                                    <h3>City Central School</h3>
+                                    <p>Earthquake Drill - Oct 15, 2023</p>
+                                </div>
+                                <div>
+                                    <span class="participant-role">Organizer</span>
+                                    <button onclick="viewParticipants(1)">View Participants</button>
+                                </div>
+                            </div>
+                            <div class="participant-card">
+                                <div class="participant-info">
+                                    <h3>Community Center</h3>
+                                    <p>Fire Drill - Oct 22, 2023</p>
+                                </div>
+                                <div>
+                                    <span class="participant-role">Organizer</span>
+                                    <button onclick="viewParticipants(2)">View Participants</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Resources Page -->
+            <section id="resources" class="page-section">
+                <div class="resources-page">
+                    <div class="resources-header">
+                        <h2><i class="fas fa-hands-helping"></i> Emergency Resources & Preparedness</h2>
+                        <p>Essential information and tools to help you prepare for and respond to disasters</p>
+                    </div>
+                    
+                    <div class="resources-grid">
+                        <div class="resource-category">
+                            <h3><i class="fas fa-phone-alt"></i> Emergency Contacts</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">National Disaster Response Force: 1070</a></li>
+                                <li><a href="#">Police: 100</a></li>
+                                <li><a href="#">Fire Department: 101</a></li>
+                                <li><a href="#">Ambulance: 102</a></li>
+                                <li><a href="#">Disaster Management Helpline: 108</a></li>
+                                <li><a href="#">Local Emergency Operations Center</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="resource-category">
+                            <h3><i class="fas fa-first-aid"></i> Medical Resources</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">First Aid Guide for Disasters</a></li>
+                                <li><a href="#">Locate Nearest Hospitals</a></li>
+                                <li><a href="#">Emergency Medical Checklist</a></li>
+                                <li><a href="#">Mental Health Support</a></li>
+                                <li><a href="#">Water Purification Methods</a></li>
+                                <li><a href="#">Sanitation Guidelines</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="resource-category">
+                            <h3><i class="fas fa-house-damage"></i> Shelter & Evacuation</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">Evacuation Route Maps</a></li>
+                                <li><a href="#">Emergency Shelter Locations</a></li>
+                                <li><a href="#">What to Bring to a Shelter</a></li>
+                                <li><a href="#">Pet-Friendly Shelters</a></li>
+                                <li><a href="#">Evacuation Planning Guide</a></li>
+                                <li><a href="#">Post-Disaster Housing Resources</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="resource-category">
+                            <h3><i class="fas fa-file-download"></i> Preparedness Guides</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">Family Emergency Plan Template</a></li>
+                                <li><a href="#">Disaster Supply Checklist</a></li>
+                                <li><a href="#">Flood Preparedness Guide</a></li>
+                                <li><a href="#">Earthquake Safety Handbook</a></li>
+                                <li><a href="#">Cyclone Preparedness Tips</a></li>
+                                <li><a href="#">Wildfire Evacuation Guide</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="resource-category">
+                            <h3><i class="fas fa-wifi"></i> Communication Resources</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">Emergency Radio Frequencies</a></li>
+                                <li><a href="#">How to Conserve Phone Battery</a></li>
+                                <li><a href="#">Text-Only Emergency Communication</a></li>
+                                <li><a href="#">Social Media Monitoring</a></li>
+                                <li><a href="#">Emergency Alert Sign-Up</a></li>
+                                <li><a href="#">Family Reunification Planning</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="resource-category">
+                            <h3><i class="fas fa-tools"></i> Recovery Resources</h3>
+                            <ul class="resource-list">
+                                <li><a href="#">Disaster Assistance Applications</a></li>
+                                <li><a href="#">Insurance Claim Guidance</a></li>
+                                <li><a href="#">Home Repair Resources</a></li>
+                                <li><a href="#">Debris Removal Information</a></li>
+                                <li><a href="#">Mental Health Recovery</a></li>
+                                <li><a href="#">Community Rebuilding Programs</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Registration Page -->
+            <section id="register" class="page-section">
+                <div class="resources-page">
+                    <div class="resources-header">
+                        <h2><i class="fas fa-user-plus"></i> Register for Drills & Training</h2>
+                        <p>Sign up for emergency preparedness drills and training sessions</p>
+                    </div>
+                    
+                    <div class="registration-form">
+                        <h2>Create an Account</h2>
+                        <div class="user-input">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label for="first-name">First Name:</label>
+                                    <input type="text" id="first-name" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="last-name">Last Name:</label>
+                                    <input type="text" id="last-name" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="email">Email Address:</label>
+                                    <input type="email" id="email" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="phone">Phone Number:</label>
+                                    <input type="tel" id="phone">
+                                </div>
+                                <div class="input-group">
+                                    <label for="password">Password:</label>
+                                    <input type="password" id="password" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="confirm-password">Confirm Password:</label>
+                                    <input type="password" id="confirm-password" required>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="user-type">I am a:</label>
+                                <select id="user-type">
+                                    <option value="individual">Individual</option>
+                                    <option value="school">School Representative</option>
+                                    <option value="organization">Organization Representative</option>
+                                    <option value="community">Community Leader</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="organization-name" id="org-label" style="display: none;">Organization Name:</label>
+                                <input type="text" id="organization-name" style="display: none;">
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox" required> I agree to receive emergency alerts
+                                </label>
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <input type="checkbox"> I would like to receive preparedness tips
+                                </label>
+                            </div>
+                            <button onclick="registerUser()">Create Account</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-calendar-check"></i> Available Drills</h2>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Drill Type</th>
+                                    <th>Location</th>
+                                    <th>Spots Available</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>15 Oct 2023, 10:00 AM</td>
+                                    <td>Earthquake Preparedness</td>
+                                    <td>City Central School</td>
+                                    <td>18/60</td>
+                                    <td><button onclick="registerForDrill(1)">Register</button></td>
+                                </tr>
+                                <tr>
+                                    <td>22 Oct 2023, 2:30 PM</td>
+                                    <td>Fire Safety</td>
+                                    <td>Community Center</td>
+                                    <td>32/50</td>
+                                    <td><button onclick="registerForDrill(2)">Register</button></td>
+                                </tr>
+                                <tr>
+                                    <td>29 Oct 2023, 9:00 AM</td>
+                                    <td>First Aid Training</td>
+                                    <td>Red Cross Building</td>
+                                    <td>12/25</td>
+                                    <td><button onclick="registerForDrill(3)">Register</button></td>
+                                </tr>
+                                <tr>
+                                    <td>5 Nov 2023, 11:00 AM</td>
+                                    <td>Flood Response</td>
+                                    <td>Riverside Community Hall</td>
+                                    <td>45/60</td>
+                                    <td><button onclick="registerForDrill(4)">Register</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Admin Panel Content -->
+        <div id="admin-panel" style="display: none;">
+            <!-- Admin Dashboard -->
+            <section id="admin-dashboard" class="page-section active">
+                <div class="admin-main-content">
+                    <div class="admin-sidebar">
+                        <h3>Admin Menu</h3>
+                        <ul class="admin-menu">
+                            <li><a href="#" class="active" data-page="admin-dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="#" data-page="admin-users"><i class="fas fa-users"></i> User Management</a></li>
+                            <li><a href="#" data-page="admin-alerts"><i class="fas fa-bell"></i> Alert Management</a></li>
+                            <li><a href="#" data-page="admin-drills"><i class="fas fa-running"></i> Drill Management</a></li>
+                            <li><a href="#" data-page="admin-resources"><i class="fas fa-book"></i> Resource Management</a></li>
+                            <li><a href="#" data-page="admin-analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                            <li><a href="#" data-page="admin-settings"><i class="fas fa-cog"></i> System Settings</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="admin-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fas fa-users"></i>
+                                <h3>1,248</h3>
+                                <p>Registered Users</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-bell"></i>
+                                <h3>42</h3>
+                                <p>Active Alerts</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-running"></i>
+                                <h3>18</h3>
+                                <p>Upcoming Drills</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <h3>7</h3>
+                                <p>High Risk Zones</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-chart-line"></i> Platform Usage</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="adminUsageChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-exclamation-circle"></i> Recent Alerts</h2>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Severity</th>
+                                        <th>Region</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>12 Oct 2023</td>
+                                        <td>Flood</td>
+                                        <td>High</td>
+                                        <td>Mumbai</td>
+                                        <td>Active</td>
+                                    </tr>
+                                    <tr>
+                                        <td>10 Oct 2023</td>
+                                        <td>Cyclone</td>
+                                        <td>Medium</td>
+                                        <td>Eastern Coast</td>
+                                        <td>Active</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8 Oct 2023</td>
+                                        <td>Landslide</td>
+                                        <td>Low</td>
+                                        <td>Northern Region</td>
+                                        <td>Resolved</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5 Oct 2023</td>
+                                        <td>Earthquake</td>
+                                        <td>Medium</td>
+                                        <td>Delhi</td>
+                                        <td>Resolved</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-running"></i> Recent Drill Activity</h2>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Location</th>
+                                        <th>Participants</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>15 Oct 2023</td>
+                                        <td>Earthquake</td>
+                                        <td>City Central School</td>
+                                        <td>42</td>
+                                        <td>Completed</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12 Oct 2023</td>
+                                        <td>Fire</td>
+                                        <td>Community Center</td>
+                                        <td>28</td>
+                                        <td>Completed</td>
+                                    </tr>
+                                    <tr>
+                                        <td>20 Oct 2023</td>
+                                        <td>Flood</td>
+                                        <td>Riverside Community</td>
+                                        <td>35</td>
+                                        <td>Upcoming</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Admin User Management -->
+            <section id="admin-users" class="page-section">
+                <div class="admin-main-content">
+                    <div class="admin-sidebar">
+                        <h3>Admin Menu</h3>
+                        <ul class="admin-menu">
+                            <li><a href="#" data-page="admin-dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="#" class="active" data-page="admin-users"><i class="fas fa-users"></i> User Management</a></li>
+                            <li><a href="#" data-page="admin-alerts"><i class="fas fa-bell"></i> Alert Management</a></li>
+                            <li><a href="#" data-page="admin-drills"><i class="fas fa-running"></i> Drill Management</a></li>
+                            <li><a href="#" data-page="admin-resources"><i class="fas fa-book"></i> Resource Management</a></li>
+                            <li><a href="#" data-page="admin-analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                            <li><a href="#" data-page="admin-settings"><i class="fas fa-cog"></i> System Settings</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="admin-content">
+                        <div class="admin-form">
+                            <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+                            <div class="user-input">
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="admin-first-name">First Name:</label>
+                                        <input type="text" id="admin-first-name" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="admin-last-name">Last Name:</label>
+                                        <input type="text" id="admin-last-name" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="admin-email">Email Address:</label>
+                                        <input type="email" id="admin-email" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="admin-role">Role:</label>
+                                        <select id="admin-role">
+                                            <option value="user">User</option>
+                                            <option value="moderator">Moderator</option>
+                                            <option value="admin">Administrator</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="admin-button">Create User</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-users"></i> User List</h2>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>John Smith</td>
+                                        <td>john@example.com</td>
+                                        <td>User</td>
+                                        <td>Active</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sarah Johnson</td>
+                                        <td>sarah@example.com</td>
+                                        <td>Moderator</td>
+                                        <td>Active</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Admin User</td>
+                                        <td>admin@example.com</td>
+                                        <td>Administrator</td>
+                                        <td>Active</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Robert Brown</td>
+                                        <td>robert@example.com</td>
+                                        <td>User</td>
+                                        <td>Inactive</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Admin Alert Management -->
+            <section id="admin-alerts" class="page-section">
+                <div class="admin-main-content">
+                    <div class="admin-sidebar">
+                        <h3>Admin Menu</h3>
+                        <ul class="admin-menu">
+                            <li><a href="#" data-page="admin-dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <li><a href="#" data-page="admin-users"><i class="fas fa-users"></i> User Management</a></li>
+                            <li><a href="#" class="active" data-page="admin-alerts"><i class="fas fa-bell"></i> Alert Management</a></li>
+                            <li><a href="#" data-page="admin-drills"><i class="fas fa-running"></i> Drill Management</a></li>
+                            <li><a href="#" data-page="admin-resources"><i class="fas fa-book"></i> Resource Management</a></li>
+                            <li><a href="#" data-page="admin-analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                            <li><a href="#" data-page="admin-settings"><i class="fas fa-cog"></i> System Settings</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="admin-content">
+                        <div class="admin-form">
+                            <h3><i class="fas fa-plus-circle"></i> Create New Alert</h3>
+                            <div class="user-input">
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <label for="alert-type">Alert Type:</label>
+                                        <select id="alert-type">
+                                            <option value="flood">Flood</option>
+                                            <option value="cyclone">Cyclone</option>
+                                            <option value="earthquake">Earthquake</option>
+                                            <option value="landslide">Landslide</option>
+                                            <option value="wildfire">Wildfire</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="alert-severity">Severity:</label>
+                                        <select id="alert-severity">
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="alert-region">Affected Region:</label>
+                                        <input type="text" id="alert-region" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="alert-expiry">Expiry Date:</label>
+                                        <input type="datetime-local" id="alert-expiry" required>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="alert-message">Alert Message:</label>
+                                    <textarea id="alert-message" rows="3" required></textarea>
+                                </div>
+                                <button class="admin-button">Publish Alert</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-bell"></i> Active Alerts</h2>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date Created</th>
+                                        <th>Type</th>
+                                        <th>Severity</th>
+                                        <th>Region</th>
+                                        <th>Expires</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>12 Oct 2023, 14:30</td>
+                                        <td>Flood</td>
+                                        <td>High</td>
+                                        <td>Mumbai</td>
+                                        <td>15 Oct 2023, 14:30</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>10 Oct 2023, 10:45</td>
+                                        <td>Cyclone</td>
+                                        <td>Medium</td>
+                                        <td>Eastern Coast</td>
+                                        <td>13 Oct 2023, 10:45</td>
+                                        <td class="action-buttons">
+                                            <button class="btn-edit">Edit</button>
+                                            <button class="btn-delete">Delete</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Additional admin sections would follow the same pattern -->
+            
+        </div>
+        
+        <footer id="user-footer">
+            <p>NIDHAR Disaster Management Platform &copy; 2023 | Powered by Advanced Analytics</p>
+            <p>This is a demonstration platform for disaster preparedness and community safety</p>
+        </footer>
+        
+        <footer id="admin-footer" class="admin-footer" style="display: none;">
+            <p>NIDHAR Admin Panel &copy; 2023 | Secure Administration Portal</p>
+            <p>All activities are logged for security purposes</p>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="drill-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Drill Details</h2>
+                <button class="close-modal" onclick="closeModal('drill-details-modal')">&times;</button>
+            </div>
+            <div id="drill-details-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="participants-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Drill Participants</h2>
+                <button class="close-modal" onclick="closeModal('participants-modal')">&times;</button>
+            </div>
+            <div id="participants-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Panel switching functionality
+        function switchToAdminPanel() {
+            document.getElementById('main-header').style.display = 'none';
+            document.getElementById('user-footer').style.display = 'none';
+            document.getElementById('user-panel').style.display = 'none';
+            
+            document.getElementById('admin-header').style.display = 'flex';
+            document.getElementById('admin-footer').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'block';
+            
+            // Reset navigation
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('admin-dashboard').classList.add('active');
+            
+            // Update admin menu active states
+            document.querySelectorAll('.admin-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.admin-menu a[data-page="admin-dashboard"]').classList.add('active');
+        }
+        
+        function switchToUserPanel() {
+            document.getElementById('admin-header').style.display = 'none';
+            document.getElementById('admin-footer').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('user-footer').style.display = 'block';
+            document.getElementById('user-panel').style.display = 'block';
+            
+            // Reset navigation
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('home').classList.add('active');
+            
+            // Update user menu active states
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.nav-link[data-page="home"]').classList.add('active');
+        }
+        
+        // Initialize map centered on India
+        const map = L.map('map').setView([20.5937, 78.9629], 5);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Simulated risk data for India (in a real application, this would come from an API)
+        const riskData = [
+            { lat: 19.0760, lng: 72.8777, risk: 'high', type: 'flood', name: 'Mumbai', radius: 30000 },
+            { lat: 13.0827, lng: 80.2707, risk: 'medium', type: 'cyclone', name: 'Chennai', radius: 25000 },
+            { lat: 28.6139, lng: 77.2090, risk: 'low', type: 'earthquake', name: 'Delhi', radius: 20000 },
+            { lat: 15.2993, lng: 74.1240, risk: 'high', type: 'landslide', name: 'Goa', radius: 15000 },
+            { lat: 22.5726, lng: 88.3639, risk: 'medium', type: 'flood', name: 'Kolkata', radius: 28000 },
+            { lat: 12.9716, lng: 77.5946, risk: 'low', type: 'cyclone', name: 'Bengaluru', radius: 22000 },
+            { lat: 26.9124, lng: 75.7873, risk: 'medium', type: 'drought', name: 'Jaipur', radius: 25000 },
+            { lat: 30.7333, lng: 76.7794, risk: 'high', type: 'earthquake', name: 'Chandigarh', radius: 20000 },
+            { lat: 17.3850, lng: 78.4867, risk: 'medium', type: 'heatwave', name: 'Hyderabad', radius: 22000 },
+            { lat: 25.5941, lng: 85.1376, risk: 'high', type: 'flood', name: 'Patna', radius: 30000 }
+        ];
+        
+        // Define risk colors
+        const riskColors = {
+            high: '#f44336',
+            medium: '#ffc107',
+            low: '#4caf50'
+        };
+        
+        // Add risk zones to the map
+        riskData.forEach(location => {
+            // Add circle for risk zone
+            const circle = L.circle([location.lat, location.lng], {
+                color: riskColors[location.risk],
+                fillColor: riskColors[location.risk],
+                fillOpacity: 0.2,
+                radius: location.radius
+            }).addTo(map);
+            
+            // Add marker for epicenter
+            const marker = L.circleMarker([location.lat, location.lng], {
+                color: riskColors[location.risk],
+                fillColor: riskColors[location.risk],
+                fillOpacity: 0.7,
+                radius: 8
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <strong>${location.name}</strong><br>
+                Risk: ${location.risk.toUpperCase()}<br>
+                Type: ${location.type.charAt(0).toUpperCase() + location.type.slice(1)}<br>
+                <button onclick="zoomToLocation(${location.lat}, ${location.lng})">Zoom to Area</button>
+            `);
+        });
+        
+        // User location marker
+        let userMarker = null;
+        
+        // Initialize charts
+        const historicalCtx = document.getElementById('historicalChart').getContext('2d');
+        const historicalChart = new Chart(historicalCtx, {
+            type: 'bar',
+            data: {
+                labels: ['2018', '2019', '2020', '2021', '2022', '2023'],
+                datasets: [{
+                    label: 'Floods',
+                    data: [12, 19, 15, 17, 16, 19],
+                    backgroundColor: '#4285F4'
+                }, {
+                    label: 'Cyclones',
+                    data: [5, 8, 6, 9, 10, 7],
+                    backgroundColor: '#F4B400'
+                }, {
+                    label: 'Landslides',
+                    data: [7, 11, 9, 13, 8, 10],
+                    backgroundColor: '#0F9D58'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Disaster Occurrences by Year'
+                    }
+                }
+            }
+        });
+        
+        const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+        const forecastChart = new Chart(forecastCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Flood Risk Forecast',
+                    data: [15, 18, 22, 35, 65, 85, 95, 90, 75, 45, 30, 20],
+                    borderColor: '#4285F4',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'Cyclone Risk Forecast',
+                    data: [10, 12, 15, 25, 55, 70, 65, 50, 35, 20, 15, 12],
+                    borderColor: '#F4B400',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Seasonal Risk Forecast 2023'
+                    }
+                }
+            }
+        });
+        
+        // Admin usage chart
+        const adminUsageCtx = document.getElementById('adminUsageChart').getContext('2d');
+        const adminUsageChart = new Chart(adminUsageCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                datasets: [{
+                    label: 'Active Users',
+                    data: [850, 920, 880, 950, 1020, 1100, 1150, 1200, 1180, 1248],
+                    borderColor: '#6a1b9a',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Active Users'
+                    }
+                }
+            }
+        });
+        
+        // Detect user's location
+        document.getElementById('detect-location').addEventListener('click', function() {
+            const statusElement = document.getElementById('location-status');
+            statusElement.textContent = "Detecting your location...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Update location input
+                        document.getElementById('location').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        statusElement.textContent = "Location detected successfully!";
+                        statusElement.style.color = "var(--success)";
+                        
+                        // Remove existing user marker if any
+                        if (userMarker) {
+                            map.removeLayer(userMarker);
+                        }
+                        
+                        // Add user marker to map
+                        userMarker = L.circleMarker([lat, lng], {
+                            color: '#1a6fc4',
+                            fillColor: '#1a6fc4',
+                            fillOpacity: 0.7,
+                            radius: 10,
+                            className: 'user-marker'
+                        }).addTo(map);
+                        
+                        // Center map on user's location
+                        map.setView([lat, lng], 10);
+                        
+                        // Bind popup to user marker
+                        userMarker.bindPopup(`
+                            <strong>Your Location</strong><br>
+                            Latitude: ${lat.toFixed(4)}<br>
+                            Longitude: ${lng.toFixed(4)}<br>
+                            <button onclick="checkNearbyRisks(${lat}, ${lng})">Check Risks Here</button>
+                        `).openPopup();
+                        
+                        // Clear status message after 3 seconds
+                        setTimeout(() => {
+                            statusElement.textContent = "";
+                        }, 3000);
+                    },
+                    function(error) {
+                        let errorMessage = "Unable to retrieve your location. ";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += "Please enable location permissions in your browser settings.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += "Location information is unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += "The request to get your location timed out.";
+                                break;
+                            default:
+                                errorMessage += "An unknown error occurred.";
+                        }
+                        
+                        statusElement.textContent = errorMessage;
+                        statusElement.style.color = "var(--danger)";
+                        alert(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                statusElement.textContent = "Geolocation is not supported by this browser. Please enter your location manually.";
+                statusElement.style.color = "var(--danger)";
+                alert('Geolocation is not supported by this browser. Please enter your location manually.');
+            }
+        });
+        
+        // Check risk level
+        document.getElementById('check-risk').addEventListener('click', function() {
+            const locationInput = document.getElementById('location').value;
+            const disasterType = document.getElementById('disaster-type').value;
+            
+            if (!locationInput) {
+                alert('Please enter a location');
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loading-indicator').style.display = 'block';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // Hide loading indicator
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                // In a real application, this would be an actual API response
+                let riskLevel = 'medium';
+                let riskMessage = 'Moderate risk detected in your area. Stay alert.';
+                
+                // Simple simulation based on location text
+                if (locationInput.toLowerCase().includes('mumbai') || locationInput.toLowerCase().includes('goa') || locationInput.toLowerCase().includes('patna')) {
+                    riskLevel = 'high';
+                    riskMessage = 'High risk detected in your area! Take immediate precautions.';
+                } else if (locationInput.toLowerCase().includes('chennai') || locationInput.toLowerCase().includes('kolkata') || locationInput.toLowerCase().includes('jaipur') || locationInput.toLowerCase().includes('hyderabad')) {
+                    riskLevel = 'medium';
+                    riskMessage = 'Moderate risk detected in your area. Stay alert.';
+                } else {
+                    riskLevel = 'low';
+                    riskMessage = 'Low risk in your area. Remain vigilant.';
+                }
+                
+                // Display appropriate alert
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = `
+                    <div class="alert ${riskLevel}">
+                        <i class="fas fa-${riskLevel === 'high' ? 'exclamation-circle' : riskLevel === 'medium' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                        <div>
+                            <h3>${riskLevel.toUpperCase()} ${disasterType.charAt(0).toUpperCase() + disasterType.slice(1)} Risk</h3>
+                            <p>${riskMessage}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Show evacuation info for high risk
+                if (riskLevel === 'high') {
+                    document.getElementById('evacuation-info').style.display = 'block';
+                    document.getElementById('evacuation-details').textContent = 
+                        'Evacuation may be necessary. Follow instructions from local authorities. Prepare an emergency kit with water, food, medications, and important documents.';
+                } else {
+                    document.getElementById('evacuation-info').style.display = 'none';
+                }
+            }, 1500);
+        });
+        
+        // Save location to localStorage
+        document.getElementById('save-location').addEventListener('click', function() {
+            const locationInput = document.getElementById('location').value;
+            if (locationInput) {
+                localStorage.setItem('savedLocation', locationInput);
+                alert('Location saved successfully!');
+            } else {
+                alert('Please enter a location to save.');
+            }
+        });
+        
+        // Load saved location if available
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedLocation = localStorage.getItem('savedLocation');
+            if (savedLocation) {
+                document.getElementById('location').value = savedLocation;
+            }
+            
+            // Show organization field if needed
+            document.getElementById('user-type').addEventListener('change', function() {
+                const orgLabel = document.getElementById('org-label');
+                const orgInput = document.getElementById('organization-name');
+                if (this.value !== 'individual') {
+                    orgLabel.style.display = 'block';
+                    orgInput.style.display = 'block';
+                } else {
+                    orgLabel.style.display = 'none';
+                    orgInput.style.display = 'none';
+                }
+            });
+            
+            // Simulate emergency alert after 3 seconds
+            setTimeout(showEmergencyAlert, 3000);
+        });
+        
+        // Navigation functionality
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show selected page
+                document.querySelectorAll('.page-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            });
+        });
+        
+        // Admin navigation functionality
+        document.querySelectorAll('.admin-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                
+                // Update active nav link
+                document.querySelectorAll('.admin-menu a').forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show selected page
+                document.querySelectorAll('.page-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            });
+        });
+        
+        // CTA button navigation
+        document.querySelectorAll('.cta-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(navLink => {
+                    navLink.classList.remove('active');
+                    if (navLink.getAttribute('data-page') === pageId) {
+                        navLink.classList.add('active');
+                    }
+                });
+                
+                // Show selected page
+                document.querySelectorAll('.page-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            });
+        });
+        
+        // Mobile menu toggle
+        document.querySelectorAll('.mobile-menu-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const menuId = this.closest('header').id === 'main-header' ? 'nav-menu' : 'admin-nav-menu';
+                document.getElementById(menuId).classList.toggle('show');
+            });
+        });
+        
+        // Global functions for button actions
+        window.zoomToLocation = function(lat, lng) {
+            map.setView([lat, lng], 10);
+        };
+        
+        window.checkNearbyRisks = function(lat, lng) {
+            document.getElementById('location').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            document.getElementById('check-risk').click();
+        };
+        
+        // Emergency alert functions
+        function showEmergencyAlert() {
+            const alertBanner = document.getElementById('emergency-alert');
+            alertBanner.style.display = 'block';
+        }
+        
+        function closeAlert() {
+            const alertBanner = document.getElementById('emergency-alert');
+            alertBanner.style.display = 'none';
+        }
+        
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Drill planning functions
+        function scheduleDrill() {
+            const drillType = document.getElementById('drill-type').value;
+            const drillDate = document.getElementById('drill-date').value;
+            const drillTime = document.getElementById('drill-time').value;
+            const drillDuration = document.getElementById('drill-duration').value;
+            const drillLocation = document.getElementById('drill-location').value;
+            
+            if (!drillDate || !drillTime || !drillLocation) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // In a real application, this would send data to a server
+            alert(`Drill scheduled successfully!\nType: ${drillType}\nDate: ${drillDate} ${drillTime}\nDuration: ${drillDuration} minutes\nLocation: ${drillLocation}`);
+            
+            // Reset form
+            document.getElementById('drill-type').value = 'earthquake';
+            document.getElementById('drill-date').value = '';
+            document.getElementById('drill-time').value = '';
+            document.getElementById('drill-duration').value = '30';
+            document.getElementById('drill-location').value = '';
+            document.getElementById('drill-notes').value = '';
+        }
+        
+        function viewDrillDetails(drillId) {
+            // In a real application, this would fetch data from a server
+            const detailsContent = document.getElementById('drill-details-content');
+            detailsContent.innerHTML = `
+                <h3>Earthquake Drill</h3>
+                <p><strong>Date:</strong> October 15, 2023</p>
+                <p><strong>Time:</strong> 10:00 AM - 11:00 AM</p>
+                <p><strong>Location:</strong> City Central School, Main Auditorium</p>
+                <p><strong>Participants:</strong> 42 registered</p>
+                <p><strong>Description:</strong> This drill will simulate a 7.0 magnitude earthquake. Participants will practice drop, cover, and hold on techniques, followed by an evacuation drill.</p>
+                <p><strong>Requirements:</strong> Comfortable clothing, closed-toe shoes</p>
+                <div style="margin-top: 1.5rem;">
+                    <button>Edit Drill</button>
+                    <button style="background: var(--accent);">Send Reminders</button>
+                    <button style="background: #6c757d;">Export Participants</button>
+                </div>
+            `;
+            showModal('drill-details-modal');
+        }
+        
+        function editDrill(drillId) {
+            alert(`Edit functionality for drill ${drillId} would open in a real application`);
+        }
+        
+        function viewParticipants(drillId) {
+            // In a real application, this would fetch data from a server
+            const participantsContent = document.getElementById('participants-content');
+            participantsContent.innerHTML = `
+                <h3>Participants for Earthquake Drill</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>John Smith</td>
+                            <td>john@example.com</td>
+                            <td>Teacher</td>
+                        </tr>
+                        <tr>
+                            <td>Sarah Johnson</td>
+                            <td>sarah@example.com</td>
+                            <td>Student</td>
+                        </tr>
+                        <tr>
+                            <td>Robert Brown</td>
+                            <td>robert@example.com</td>
+                            <td>Parent</td>
+                        </tr>
+                        <tr>
+                            <td>Maria Garcia</td>
+                            <td>maria@example.com</td>
+                            <td>Staff</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 1.5rem;">
+                    <button>Export to CSV</button>
+                    <button style="background: #6c757d;">Print List</button>
+                </div>
+            `;
+            showModal('participants-modal');
+        }
+        
+        // Registration functions
+        function registerUser() {
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const userType = document.getElementById('user-type').value;
+            
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            // In a real application, this would send data to a server
+            alert(`Registration successful!\nWelcome ${firstName} ${lastName}!`);
+            
+            // Reset form
+            document.getElementById('first-name').value = '';
+            document.getElementById('last-name').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('user-type').value = 'individual';
+            document.getElementById('organization-name').style.display = 'none';
+            document.getElementById('org-label').style.display = 'none';
+        }
+        
+        function registerForDrill(drillId) {
+            // In a real application, this would show a registration form
+            alert(`Registration functionality for drill ${drillId} would open in a real application`);
+        }
+        
+        // Alert functions
+        function showEvacuationRoutes() {
+            alert('Evacuation routes would be displayed in a real application');
+        }
+        
+        function showPreparationGuidelines() {
+            alert('Preparation guidelines would be displayed in a real application');
+        }
+        
+        function showSafetyTips() {
+            alert('Safety tips would be displayed in a real application');
+        }
+        
+        function shareAlert() {
+            alert('Alert sharing functionality would open in a real application');
+        }
+    </script>
 </body>
 </html>
