@@ -1,0 +1,28 @@
+let todo = [] ;
+
+let n = prompt("please enter your request");
+
+while(true){
+if( n == "quit"){
+console.log("quitting app");
+}
+if(n == "list"){
+
+for(let i = 0 ; i < todo.length ; i++){
+ console.log(i , todo[i] ) ;
+}
+}
+else if( n == "add"){
+let task = prompt("enter what you have to add");
+
+todo.push(task);
+console.log("task added");
+}
+else if(n == "delete" ) {
+let delete = prompt("enter the task index ");
+
+todo.splice(delete , 1);
+console.log("task deleted");
+
+}
+n = prompt("please enter your request");
