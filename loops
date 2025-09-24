@@ -1,0 +1,45 @@
+// doing things repeatively we doit by loops 
+// 
+
+//print no from ``1 to 5
+
+for(let i = 1 ; i <= 5 ; i++){
+console.log(i);
+}
+
+//print all odd nos from 1 to 15 
+
+for(let i = 1 ; i <= 15 ; i= i+2){
+ console.log(i)
+}
+
+//print multiplication of 5 
+
+for(let i = 1 ; i <= 5 ; i++){
+console.log(5*i);
+}
+
+                                                                            // Nested of loops ???
+
+  loop ke andar loop asto yeychya mahde
+
+ for(let i = 1 ;i <= 3 ; i++){
+   for(let j = 1 ; j <= 3 ; j++){
+              console.log(i) ;                     
+}
+
+
+                                            // favourite Anime guess game 
+
+let movie = "Demon slayer" ;
+
+let n = prompt("GUESS MY FAVOURITE MOVIE");
+
+while( (movie != n ) && ( n != "quit" )){
+console.log("wrong guess buddy ");
+n = prompt("again guess my fav movie");
+}
+
+if(movie == n ){
+ console.log("right guessed ");
+}
